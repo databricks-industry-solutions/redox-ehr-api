@@ -43,3 +43,6 @@ class RedoxApiAuth():
             'typ': 'JWT',
           })
       }, timeout=timeout)
+
+  def can_connect(self):
+    pass #TODO
