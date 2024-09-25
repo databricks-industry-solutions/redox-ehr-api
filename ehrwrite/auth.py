@@ -11,9 +11,9 @@ class RedoxApiAuth():
                private_key, 
                auth_json,
                auth_location = 'https://api.redoxengine.com/v2/auth/token'):
-    self.client_id = client_id
-    self.private_key = private_key
-    self.auth_json = json.loads(auth_json)
+    self.__client_id = client_id
+    self.__private_key = private_key
+    self.__auth_json = json.loads(auth_json)
     self.auth_location = auth_location
     self.token = None
     #TODO need to track token expiration time
@@ -47,18 +47,18 @@ class RedoxApiAuth():
         'client_assertion_type': 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
         'client_assertion': jwt.encode(
            {
-              'iss': self.client_id,
-              'sub': self.client_id,
-              'aud': self.auth_location,
+              'iss': self.__client_id,
+              'sub': self.__client_id,
+              'aud': self.__auth_location,
               'exp': int(expiration.timestamp()),
               'iat': int(now.timestamp()),
               'jti': uuid4().hex,
           },
-          self.private_key,
-          algorithm=self.auth_json['alg'],
+          self.__private_key,
+          algorithm=self.__auth_json['alg'],
           headers={
-            'kid': self.auth_json['kid'],
-            'alg': self.auth_json['alg'],
+            'kid': self.__auth_json['kid'],
+            'alg': self.__auth_json['alg'],
             'typ': 'JWT',
           })
       }, timeout=timeout)
