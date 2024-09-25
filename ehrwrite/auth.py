@@ -22,14 +22,14 @@ class RedoxApiAuth():
                 now = datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")),
                 expiration = datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")) + datetime.timedelta(minutes=5),
                 timeout=30):
-    if self.token is None: #TODO or token is expired
+    if self.__token is None: #TODO or token is expired
       t = self.generate_token(now, expiration, timeout)
       t.raise_for_status()
       self.__token = json.loads(t.text) #TODO error checking needed
-    return self.token
+    return self.__token
 
   def __call__(self, r):
-    r.headers['Authorization'] = 'Bearer %s' % self.token
+    r.headers['Authorization'] = 'Bearer %s' % self.__token
     return r
 
   """
