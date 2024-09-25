@@ -18,23 +18,23 @@ class RedoxApiAuth(requests.auth.AuthBase):
                private_key, 
                auth_json,
                auth_location = 'https://api.redoxengine.com/v2/auth/token'):
-    self.client_id = client_id
-    self.private_key = private_key
-    self.auth_json = json.loads(auth_json)
+    self.__client_id = client_id
+    self.__private_key = private_key
+    self.__auth_json = json.loads(auth_json)
     self.auth_location = auth_location
-    self.token = None
+    self.__token = None
 
   def get_token(self, 
         now = datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")),
         expiration = datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")) + datetime.timedelta(minutes=5), timeout=30):
-    if self.token is None: #or token is expired
+    if self.__token is None: #or token is expired
       t = self.generate_token(now, expiration, timeout)
       t.raise_for_status()
-      self.token = json.loads(t.text)
-    return self.token
+      self.__token = json.loads(t.text)
+    return self.__token
 
   def __call__(self, r):
-    r.headers['Authorization'] = 'Bearer %s' % self.token['access_token']
+    r.headers['Authorization'] = 'Bearer %s' % self.__token['access_token']
     return r
 
   """
@@ -50,18 +50,18 @@ class RedoxApiAuth(requests.auth.AuthBase):
         'client_assertion_type': 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
         'client_assertion': jwt.encode(
            {
-              'iss': self.client_id,
-              'sub': self.client_id,
+              'iss': self.__client_id,
+              'sub': self.__client_id,
               'aud': self.auth_location,
               'exp': int(expiration.timestamp()),
               'iat': int(now.timestamp()),
               'jti': uuid4().hex,
           },
-          self.private_key,
-          algorithm=self.auth_json['alg'],
+          self.__private_key,
+          algorithm=self.__auth_json['alg'],
           headers={
-            'kid': self.auth_json['kid'],
-            'alg': self.auth_json['alg'],
+            'kid': self.__auth_json['kid'],
+            'alg': self.__auth_json['alg'],
             'typ': 'JWT',
           })
       }, timeout=timeout)
@@ -70,11 +70,11 @@ class RedoxApiAuth(requests.auth.AuthBase):
 # COMMAND ----------
 
 # DBTITLE 1,Auth params
-key = """<private key here>"""
-client_id = '<client id here>'
+key = "<auth key>"
+client_id = '<client id>'
 redox_auth_location = 'https://api.redoxengine.com/v2/auth/token'
 ## All Redox FHIR request URLs start with this base: https://api.redoxengine.com/fhir/R4/[organization-name]/[environment-type]/
-auth_json = """<auth json here>"""
+auth_json = """<auth json>"""
 
 # COMMAND ----------
 
@@ -237,8 +237,12 @@ def postToRedoxUDF(data_iter: Iterator[pd.Series]) -> Iterator[pd.Series]:
       'response_url': response.url
     }
 
-def postToRedox(url, auth, data):
-  response = requests.post(url, auth=auth, data=data)
+def postToRedox(url, auth, partition):
+  auth.get_token() #generate a new token for the partition 
+  return map(lambda row: {'request_payload': row, 'response': postToRedoxRow(url, auth, row)}, partition)
+
+def postToRedoxRow(url, auth, row):
+  response = requests.post(url, auth=auth, data=row)
   return {
     'response_status_code': response.status_code, 
     'response_time_seconds': (response.elapsed.microseconds / 1000000),
@@ -273,7 +277,7 @@ response = (
   result_rdd
   .map(lambda x: json.loads(x))
   .map(lambda x: json.dumps(x, indent=4))
-  .map(lambda x: {'request_payload': x, 'response': postToRedox(url, auth=auth, data=x)})
+  .mapPartitions(lambda partition: postToRedox(url, auth, partition))
 )
 
 # COMMAND ----------
@@ -283,6 +287,7 @@ response.take(1)
 # COMMAND ----------
 
 # DBTITLE 1,Pandas UDF
+
 (
   result_rdd
   .map(lambda x: json.loads(x))
@@ -328,11 +333,6 @@ def redox_fhir_api_action(client_id, kid, auth_location, private_key, base_url, 
     else:
         print(f"{datetime.datetime.now()} - Request failed with status code: {response.status_code}")
         print(f"{datetime.datetime.now()} - Error message from endpoint: {response.text}")
-
-# COMMAND ----------
-
-# DBTITLE 1,test 1 - patient search
-redox_fhir_api_action(redox_client_id, private_key_kid, redox_auth_location, private_key, redox_base_url, 'post', 'Patient','_search')
 
 # COMMAND ----------
 
