@@ -3,12 +3,12 @@
 
 # COMMAND ----------
 
-# DBTITLE 1,install requirements
+# DBTITLE 1,Install requirements
 # MAGIC %pip install axios python-jose
 
 # COMMAND ----------
 
-# DBTITLE 1,authentication handler
+# DBTITLE 1,Authentication handler
 import datetime, jwt, requests, json, zoneinfo
 from uuid import uuid4
 
@@ -69,17 +69,17 @@ class RedoxApiAuth(requests.auth.AuthBase):
 
 # COMMAND ----------
 
-# DBTITLE 1,auth parameters
+# DBTITLE 1,Auth params
 key = """<private key here>"""
 client_id = '<client id here>'
 redox_auth_location = 'https://api.redoxengine.com/v2/auth/token'
 ## All Redox FHIR request URLs start with this base: https://api.redoxengine.com/fhir/R4/[organization-name]/[environment-type]/
 auth_json = """<auth json here>"""
 
-auth = RedoxApiAuth(client_id, key, auth_json)
-
 # COMMAND ----------
 
+# DBTITLE 1,Authenticate and get token
+auth = RedoxApiAuth(client_id, key, auth_json)
 auth_result = auth.get_token(now = datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")),
   expiration = (datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")) + datetime.timedelta(minutes=5)))
 auth_result
@@ -90,10 +90,12 @@ auth_result
 
 # COMMAND ----------
 
+# DBTITLE 1,Install dbignite to write FHIR data
 # MAGIC %pip install git+https://github.com/databricks-industry-solutions/dbignite-forked.git
 
 # COMMAND ----------
 
+# DBTITLE 1,Create FHIR from table
 from dbignite.writer.bundler import *
 from dbignite.writer.fhir_encoder import *
 import json
@@ -113,6 +115,7 @@ maps = [Mapping('PATIENT_MRN', 'Patient.id'),
     Mapping('CODE', 'Observation.valueQuantity.code'),
     Mapping('CODE', 'Observation.valueQuantity.unit'),
     Mapping('VALUE', 'Observation.valueQuantity.value'),
+    #hardcoded metadata
     Mapping('http://unitsofmeasure.org', 'Observation.valueQuantity.system', True),
     Mapping('vital-signs', 'Observation.category.coding.code', True),
     Mapping('vital-signs', 'Observation.category.coding.display', True),
@@ -125,15 +128,14 @@ maps = [Mapping('PATIENT_MRN', 'Patient.id'),
 # Instance of the encoder & bundle writer
 m = MappingManager(maps, data.schema)
 b = Bundle(m)
-result = b.df_to_fhir(data)
-observation_bundle = '\n'.join([str(x) for x in result.map(lambda x: json.loads(x)).map(lambda x: json.dumps(x, indent=4)).take(10)])
+result_rdd = b.df_to_fhir(data)
+observation_bundle = '\n'.join([str(x) for x in result_rdd.map(lambda x: json.loads(x)).map(lambda x: json.dumps(x, indent=4)).take(10)])
 #Pretty printing the resulting RDD
 print(observation_bundle)
 
 # COMMAND ----------
 
-# DBTITLE 1,seed observation bundle for testing
-observation_bundle = """{
+XXXobservation_bundle = """{
   "resourceType": "Bundle",
   "type": "message",
   "entry": [
@@ -193,6 +195,7 @@ observation_bundle = """{
 
 # COMMAND ----------
 
+# DBTITLE 1,authenticate
 auth = RedoxApiAuth(client_id, key, auth_json)
 auth_result = auth.get_token(
   now = datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")),
@@ -201,7 +204,12 @@ auth_result
 
 # COMMAND ----------
 
+# DBTITLE 1,endpoint to post
 #TODO make this a class
+from pyspark.sql.functions import pandas_udf, col
+import pandas as pd
+from typing import Iterator
+
 base_url = 'https://api.redoxengine.com/fhir/R4/'
 org = 'redox-fhir-sandbox'
 env = 'Development'
@@ -211,32 +219,76 @@ http_method = 'post'
 
 url = base_url + org + '/' + env + '/' + endpoint + '/' + action
 print(url)
+
+"""
+postToRedoxUDF does not work currently
+"""
+@pandas_udf(returnType=MapType(StringType(), StringType()))
+def postToRedoxUDF(data_iter: Iterator[pd.Series]) -> Iterator[pd.Series]: 
+  auth = RedoxApiAuth(client_id, key, auth_json)
+  auth.generate_token()
+  for row in data_iter:
+    response = requests.post(url, auth=auth, data=data)
+    yield {
+      'response_status_code': response.status_code, 
+      'response_time_seconds': (response.elapsed.microseconds / 1000000),
+      'response_headers': response.headers,
+      'response_text': response.text,
+      'response_url': response.url
+    }
+
+def postToRedox(url, auth, data):
+  response = requests.post(url, auth=auth, data=data)
+  return {
+    'response_status_code': response.status_code, 
+    'response_time_seconds': (response.elapsed.microseconds / 1000000),
+    'response_headers': response.headers,
+    'response_text': response.text,
+    'response_url': response.url
+  }
+          
+
 #https://api.redoxengine.com/fhir/R4//redox-fhir-sandbox/Development/Observation/$observation-create
 
 # COMMAND ----------
 
+
 response = requests.post(url, auth=auth, data=observation_bundle)
-
-# COMMAND ----------
-
 response
-
-# COMMAND ----------
-
 response.text
 
 # COMMAND ----------
 
+# DBTITLE 1,RDD Approach
+"""
 response = (
-  result
+  result_rdd
   .map(lambda x: json.loads(x))
   .map(lambda x: json.dumps(x, indent=4))
-  .map(lambda x: requests.post(url, auth=auth, data=x).text)
+  .map(lambda x: requests.post(url, auth=auth, data=x))
+)
+"""
+
+response = (
+  result_rdd
+  .map(lambda x: json.loads(x))
+  .map(lambda x: json.dumps(x, indent=4))
+  .map(lambda x: {'request_payload': x, 'response': postToRedox(url, auth=auth, data=x)})
 )
 
 # COMMAND ----------
 
 response.take(1)
+
+# COMMAND ----------
+
+# DBTITLE 1,Pandas UDF
+(
+  result_rdd
+  .map(lambda x: json.loads(x))
+  .map(lambda x: Row(**{"fhir_msg": json.dumps(x, indent=4)}))
+  .toDF().select(col("fhir_msg"), postToRedoxUDF(col("fhir_msg")))
+).show()
 
 # COMMAND ----------
 
