@@ -15,7 +15,7 @@ class RedoxApiAuth():
     self.__private_key = private_key
     self.__auth_json = json.loads(auth_json)
     self.auth_location = auth_location
-    self.token = None
+    self.__token = None
     #TODO need to track token expiration time
 
   def get_token(self,
@@ -25,7 +25,7 @@ class RedoxApiAuth():
     if self.token is None: #TODO or token is expired
       t = self.generate_token(now, expiration, timeout)
       t.raise_for_status()
-      self.token = json.loads(t.text) #TODO error checking needed
+      self.__token = json.loads(t.text) #TODO error checking needed
     return self.token
 
   def __call__(self, r):
