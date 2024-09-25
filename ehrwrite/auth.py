@@ -49,7 +49,7 @@ class RedoxApiAuth():
            {
               'iss': self.__client_id,
               'sub': self.__client_id,
-              'aud': self.__auth_location,
+              'aud': self.auth_location,
               'exp': int(expiration.timestamp()),
               'iat': int(now.timestamp()),
               'jti': uuid4().hex,
