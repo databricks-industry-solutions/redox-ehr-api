@@ -1,11 +1,11 @@
 """
- Build classes here
+Class to handle authentication
 """
 
 import datetime, jwt, requests, json, zoneinfo
 from uuid import uuid4
 
-class RedoxApiAuth():
+class RedoxApiAuth(requests.auth.AuthBase):
   def __init__(self, 
                client_id, 
                private_key, 
@@ -16,20 +16,21 @@ class RedoxApiAuth():
     self.__auth_json = json.loads(auth_json)
     self.auth_location = auth_location
     self.__token = None
-    #TODO need to track token expiration time
+    self.__token_expiry = None
 
   def get_token(self,
                 now = datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")),
                 expiration = datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")) + datetime.timedelta(minutes=5),
                 timeout=30):
-    if self.__token is None: #TODO or token is expired
+    if self.__token is None or now >= self.__token_expiry:
       t = self.generate_token(now, expiration, timeout)
       t.raise_for_status()
-      self.__token = json.loads(t.text) #TODO error checking needed
+      self.__token = json.loads(t.text)
+      self.__token_expiry = expiration
     return self.__token
-
+  
   def __call__(self, r):
-    r.headers['Authorization'] = 'Bearer %s' % self.__token
+    r.headers['Authorization'] = 'Bearer %s' % self.__token['access_token']
     return r
 
   """
@@ -37,10 +38,7 @@ class RedoxApiAuth():
       @param expiration = the datetime when the token expires, default 5 minutes
       @param timeout = seconds to timeout request, default 30 
   """
-  def generate_token(self,
-                     now = datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")),
-                     expiration = datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")) + datetime.timedelta(minutes=5),
-                     timeout=30): 
+  def generate_token(self, now = datetime.datetime.now(), expiration = datetime.datetime.now() + datetime.timedelta(minutes=5), timeout=30): 
     return requests.post(self.auth_location, 
         data= {
         'grant_type': 'client_credentials',
@@ -62,9 +60,9 @@ class RedoxApiAuth():
             'typ': 'JWT',
           })
       }, timeout=timeout)
-
+    
   def can_connect(self):
     pass #TODO
 
-
-
+  def get_token_expiry(self):
+    return self.__token_expiry
