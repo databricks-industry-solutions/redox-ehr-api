@@ -36,6 +36,7 @@ class RedoxApiAuth(requests.auth.AuthBase):
   def __call__(self, r):
     r.headers['Authorization'] = 'Bearer %s' % self.get_token()['access_token']
     r.headers['Redox-Source-Id'] = self.source_id
+    print(str(r.headers))
     return r
 
   """
