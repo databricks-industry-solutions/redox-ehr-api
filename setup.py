@@ -11,7 +11,7 @@ with open(path.join(this_directory, "README.md"), encoding="utf-8") as f:
 
 VERSION = "0.0.1"
 setup(
-    name="ehrwriteback",
+    name="redoxwrite",
     version=VERSION,
     python_requires='>=3.9',
     author="Emma Yamada, Aaron Zavora",
