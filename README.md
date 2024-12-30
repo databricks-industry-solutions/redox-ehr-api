@@ -4,10 +4,10 @@
 [![CLOUD](https://img.shields.io/badge/CLOUD-CHANGE_ME-blue?logo=googlecloud&style=for-the-badge)](https://databricks.com/try-databricks)
 
 ## Business Problem
-WHAT IS THE BUSINESS PROBLEM ADDRESSED BY THIS SOLUTION
+This accelerator uses a Databricks partner, [Redox](https://docs.redoxengine.com/how-to-use-redox/manage-cloud-connectivity/create-a-destination-for-microsoft-azure-databricks/), to write data from Databricks to any EHR system.
 
 ## Reference Architecture
-IMAGE TO REFERENCE ARCHITECTURE
+[!alt text](./img/architecture_ref.png)
 
 ## Authors
 <john.doe@databricks.com>

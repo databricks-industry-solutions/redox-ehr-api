@@ -1,24 +1,60 @@
 # Databricks notebook source
-# DBTITLE 1,install requirements
-pip install axios python-jose
+# DBTITLE 1,Credentials setup
 
-# COMMAND ----------
-
-dbutils.library.restartPython()
-
-# COMMAND ----------
-
-# DBTITLE 1,environment setup
-with open('/Volumes/yamada_dev/redox_fhir/config/private key.pem', 'rb') as f:
-  private_key = f.read()
-
+private_key = """
+-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDHJez9j64sN9j1
+OQnSZ8eIf7He3J0JlMThPSnbwdiq9zQwUUndxAQ2nuNrA1cy+J7WUNnJwZmaJFKq
+gH840YQy84z4lFN8pkuWQSHLsewP5oebnD64rDnxYkwoR1uD0vAu1AXKIWAe3N2a
+9+LRQuh7xF2HKMuibHsjLa8vbLJuwJpYkOPCZ/bxhAmTyq3UIqsjw2ksbuF0V1eq
+C+tBBkdXoypnlRzlbfdYC+u+ltqam0hVUjwIKDCEihtg79ao6SsZW71hK7jsYmHi
+vRN5WBhm6HtbjYK534oj8/kG74e7doQL4oRvNnMBUMkb7WGOaB2C8nKeyd0kohww
+gc2S12f5AgMBAAECggEAJlv0R6z2yBajyCxJ64jI4s5x5PMKno9U0uvUlbtDcD74
+gvwNZdV9WEYHmRPGJo/EDJT7NkT/wLSRZb0lhDy7IZNPCoyLfj2L3q/CAjnNtgxZ
+/4u7exfVe1zLPZDtHDmzwNlfGh2OpbM2TkTEIDmqjTh4KXIeszUBDPgeP9zIi9Nf
+inrVaOjl1zwiuJidbxwsia7fVl68HdrL7Krkqci02w8BQWhL6F/S4b8NfxrtDAxk
+v0zm9J1in0pjvKtbVzXA2qXfOj78g5RVideCSTpymLNJ5RgEUq2BZOytS3+SzzCb
+GaJhRuexIU7w758OWRxgTig2i3QQ9cEa4vPelWcNuQKBgQDkJZ9sRFPEuBsJj2+K
+JBE8GN7S+A9kywU7Zb7tgoaGT1GH7viO0Odpi9N19xEeU/qwMABz73nZ5sZiQ+q9
+Db+z1K+TObOzVq9/ZN6c4hhjzTSFomGVPKNnZwHZulu37ij71GJEDd+RtDOCi2J2
+Izc+5aOE4ZhrTCvb+C6G29DLtQKBgQDfdf2BRcGPzUzFjmcfwlPls5x2N/s27ZVx
+e4k5ou53xu4V7144Gee39SqdQrkHmukjg368hDJdNracm/ApPYdrjwsjANJXkFkY
+ILQQ6f7Dc8WxRZRWzrtrXGICvemt+vbUrSIn4GwfTmP5w62MNmsyDeu3cnNGL+gJ
+e+6y2cB9tQKBgQCOVB5J17J+tfBAHZiTEH8kA8v2x0QrODCSZp4e49/yqEcPy3iK
++C51/QI1xKWMSw3InpmZuhtFYh//K6mkuZAPqy7BZS0DQ6AGlLIAI1jd4iXS/INu
+K78xAeT4pLcVXuF4gX2wQQtphYbg+P26/6s2dOJ3QpnozkNKXmEARt/SRQKBgEyo
+G0jHdzkvglCbI0E/1qwLy3a6iZE0O3nsmQyOmiO4uGAJ91ZjfJwcnHvKMdMsDyJB
+r65X4zca19YtoFtlYhlBvt5JH98uA4JFZcAPpXfDNWQ0rEiDLsQLswuhvpISb65R
+nk/zquOqbp11xQk+edN39w69UlIXiRAH1cDA9kmpAoGAEven0O3LKXJWcaX4TOrb
+WdlYjtj2VK40hLEjMTjnEnIZfEuq4FZsV+b44eOyZs+m9OnNxESjCStK6JtUMRHp
+vxWcyguE1//QRggb345AQk9x4d8zJQyADrNn8ZbVdf3UWOstSdMIHZvl5RZXKxQs
+NvMrTO1wQKMDU4kB6JrE2qA=
+-----END PRIVATE KEY-----
+"""
 redox_client_id = '40c57cc3-e4b5-4bb5-a19d-a7cc77204fa5'
-private_key_kid = 'JKMTAeKln8EIpbuNePD7Lm0HM_yUkojryb1tnm2Z7Gc'
-redox_auth_location = 'https://api.redoxengine.com/v2/auth/token'
-redox_base_url = 'https://api.redoxengine.com/fhir/R4/redox-fhir-sandbox/Development/'
-## All Redox FHIR request URLs start with this base: https://api.redoxengine.com/fhir/R4/[organization-name]/[environment-type]/
-auth_json = '{"kid": "JKMTAeKln8EIpbuNePD7Lm0HM_yUkojryb1tnm2Z7Gc", "alg": "RS384"}'
+auth_json = """
+{
+  "e": "AQAB",
+  "n": "xyXs_Y-uLDfY9TkJ0mfHiH-x3tydCZTE4T0p28HYqvc0MFFJ3cQENp7jawNXMvie1lDZycGZmiRSqoB_ONGEMvOM-JRTfKZLlkEhy7HsD-aHm5w-uKw58WJMKEdbg9LwLtQFyiFgHtzdmvfi0ULoe8RdhyjLomx7Iy2vL2yybsCaWJDjwmf28YQJk8qt1CKrI8NpLG7hdFdXqgvrQQZHV6MqZ5Uc5W33WAvrvpbamptIVVI8CCgwhIobYO_WqOkrGVu9YSu47GJh4r0TeVgYZuh7W42Cud-KI_P5Bu-Hu3aEC-KEbzZzAVDJG-1hjmgdgvJynsndJKIcMIHNktdn-Q",
+  "d": "Jlv0R6z2yBajyCxJ64jI4s5x5PMKno9U0uvUlbtDcD74gvwNZdV9WEYHmRPGJo_EDJT7NkT_wLSRZb0lhDy7IZNPCoyLfj2L3q_CAjnNtgxZ_4u7exfVe1zLPZDtHDmzwNlfGh2OpbM2TkTEIDmqjTh4KXIeszUBDPgeP9zIi9NfinrVaOjl1zwiuJidbxwsia7fVl68HdrL7Krkqci02w8BQWhL6F_S4b8NfxrtDAxkv0zm9J1in0pjvKtbVzXA2qXfOj78g5RVideCSTpymLNJ5RgEUq2BZOytS3-SzzCbGaJhRuexIU7w758OWRxgTig2i3QQ9cEa4vPelWcNuQ",
+  "p": "5CWfbERTxLgbCY9viiQRPBje0vgPZMsFO2W-7YKGhk9Rh-74jtDnaYvTdfcRHlP6sDAAc-952ebGYkPqvQ2_s9Svkzmzs1avf2TenOIYY800haJhlTyjZ2cB2bpbt-4o-9RiRA3fkbQzgotidiM3PuWjhOGYa0wr2_guhtvQy7U",
+  "q": "33X9gUXBj81MxY5nH8JT5bOcdjf7Nu2VcXuJOaLud8buFe9eOBnnt_UqnUK5B5rpI4N-vIQyXTa2nJvwKT2Ha48LIwDSV5BZGCC0EOn-w3PFsUWUVs67a1xiAr3prfr21K0iJ-BsH05j-cOtjDZrMg3rt3JzRi_oCXvustnAfbU",
+  "dp": "jlQeSdeyfrXwQB2YkxB_JAPL9sdEKzgwkmaeHuPf8qhHD8t4ivgudf0CNcSljEsNyJ6ZmbobRWIf_yuppLmQD6suwWUtA0OgBpSyACNY3eIl0vyDbiu_MQHk-KS3FV7heIF9sEELaYWG4Pj9uv-rNnTid0KZ6M5DSl5hAEbf0kU",
+  "dq": "TKgbSMd3OS-CUJsjQT_WrAvLdrqJkTQ7eeyZDI6aI7i4YAn3VmN8nByce8ox0ywPIkGvrlfjNxrX1i2gW2ViGUG-3kkf3y4DgkVlwA-ld8M1ZDSsSIMuxAuzC6G-khJvrlGeT_Oq46punXXFCT5503f3Dr1SUheJEAfVwMD2Sak",
+  "qi": "Even0O3LKXJWcaX4TOrbWdlYjtj2VK40hLEjMTjnEnIZfEuq4FZsV-b44eOyZs-m9OnNxESjCStK6JtUMRHpvxWcyguE1__QRggb345AQk9x4d8zJQyADrNn8ZbVdf3UWOstSdMIHZvl5RZXKxQsNvMrTO1wQKMDU4kB6JrE2qA",
+  "kty": "RSA",
+  "kid": "DTXccKR4h4Dfhfs1w7CctFOqR545kKj5Xp3T48UEMLA",
+  "alg": "RS384",
+  "use": "sig"
+}
+"""
+
 redox_source_id = '91b0ab2f-7b86-441d-9cbf-9b9a6d648d59'
+
+#private_key_kid = 'JKMTAeKln8EIpbuNePD7Lm0HM_yUkojryb1tnm2Z7Gc'
+#redox_auth_location = 'https://api.redoxengine.com/v2/auth/token'
+#redox_base_url = 'https://api.redoxengine.com/fhir/R4/redox-fhir-sandbox/Development/'
+## All Redox FHIR request URLs start with this base: https://api.redoxengine.com/fhir/R4/[organization-name]/[environment-type]/
 
 # COMMAND ----------
 
