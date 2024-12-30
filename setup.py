@@ -26,6 +26,6 @@ setup(
     ],
     packages=['redoxwrite'],
     install_requires=[
-        "jwt"
+        "pyjwt"
     ]
 )
