@@ -21,9 +21,11 @@ class RedoxApiAuth(requests.auth.AuthBase):
     self.token_expiry = None
 
   def get_token(self,
-                now = datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")),
-                expiration = datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")) + datetime.timedelta(minutes=5),
+                now = None,
+                expiration = None,
                 timeout=30):
+    now = (now if now is not None else datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")))
+    expiration = (expiration if expiration is not None else datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")) + datetime.timedelta(minutes=5))
     if self.__token is None or now >= self.token_expiry:
       t = self.generate_token(now, expiration, timeout)
       t.raise_for_status()
@@ -42,9 +44,11 @@ class RedoxApiAuth(requests.auth.AuthBase):
       @param timeout = seconds to timeout request, default 30 
   """
   def generate_token(self,
-                     now = datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")),
-                     expiration = datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")) + datetime.timedelta(minutes=5),
-                     timeout=30): 
+                     now = None,
+                     expiration = None,
+                     timeout=30):
+    now = (now if now is not None else datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")))
+    expiration = (expiration if expiration is not None else datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")) + datetime.timedelta(minutes=5))
     return requests.post(self.auth_location, 
         data= {
         'grant_type': 'client_credentials',
