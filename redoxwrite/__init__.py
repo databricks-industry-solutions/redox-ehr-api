@@ -1,2 +1,2 @@
-from auth import *
-from endpoint import *
+from redoxwrite.auth import *
+from redoxwrite.endpoint import *
