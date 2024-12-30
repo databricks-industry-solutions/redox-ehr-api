@@ -35,6 +35,7 @@ class RedoxApiAuth(requests.auth.AuthBase):
 
   def __call__(self, r):
     r.headers['Authorization'] = 'Bearer %s' % self.get_token()['access_token']
+    r.headers['Redox-Source-Id'] = '91b0ab2f-7b86-441d-9cbf-9b9a6d648d59'
     return r
 
   """
@@ -70,11 +71,46 @@ class RedoxApiAuth(requests.auth.AuthBase):
 # COMMAND ----------
 
 # DBTITLE 1,Auth params
-key = "<auth key>"
-client_id = '<client id>'
+key = """-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDnKSps27qL1baP
+XB6AUDTFLEq59LTe6Jc/9iJ6v5kG1/7HQqrPOxfDZjg8VhNdi/MpfMWIu8g6/6QF
+iT+hIIE3gOK02Fe36SR/fselr5Rn0oKi0Hkr3TQuC7X69BqNTKC7X1tqrmt3Y/Ew
+2PV9x0hcE1nxA7CGQQJJ3PZerTU46800hDtz/21s5cVGCIpW0zDNYK7ms0NdizNe
+QZJgwRP/Xh+waSJCXM+1Y/3L1FwC+GwGcrGExPnAj1isJi+YF3MV+3m/mNVsgBR7
+qAxRrU6MzV3NuVDNsm5iQvNb/aUbIAKmo9fgT+9OQsQgXWYUhCjAH5RZthskhV5+
+69pEOb3LAgMBAAECggEAbPPssLFiPC2HZguzvqPPM44cTIiHxbbYL0gKWVO8Q0sE
+JZQJITLHkQw5fkrNxt5DRq8uBbQIfLJoc0mM6ZuB/BCuCjIcKi1jzAoL/M6Egujo
+NOhQ7HlO8lMHu5hZeXcAHUClPGOoeHXtRSpFjzqiIu/mCSDFj4nNk9Xnc5ltB/3K
+3oM9HrPY0gcTT9PldR/XCAoZkOccuwyBB800TgDn48IqyAcviRup0nP8wsFyNXYj
+Gq5ZPfhgzYC8XMP3yl6HCj5DZOvp8ymOgLAGjTGInPxXMjJUK9SYk0Xhvp1ICWYA
+12o+z4cgjW1J7Xbps+huO5VnZa/M61W3+4jdGLErCQKBgQD72IW7U/A+7w/GfbKZ
+gvMdNjU0icS7O8CrVpcYS8ApT9cHUed52PHSUS8e5kcLYWOIIMJ0J595BreAc7xW
+EDaU1BIbfGO4Ukpd1dxi0R/A648FQhXnlhU5m9chulrsrNaiCT4VXkDiHKb+/f63
+W9kvcH7pD/ZXVSSoNDvyTWbVQwKBgQDq+UvQgMjC+jvWvNbNZu+31MVA7gznnLcR
+OG6xf+IIqznZqM0Nx3n5cQERNn7OzF4d7KVyG5DQCQGLeRVEFfu7tEYeKRc2i3F9
+l/8X0AFpU2o+ayFGpfg5vp1WUOS2oHOAVhk3vgQYO4BE0s1HeuDmcKcQKgBz8ggA
+yGUSdEmo2QKBgFnmBobCBcZRS85M3E4UAnhw+zkP3JwBTltbA4B2udeFWnqQcBJ8
+sIWk2S8sgDu9veu/1enkovZuwV4m8hm+m90wfm41Ttti9IzeZFcZ0z3oWBtGZc9P
+MbBowriVbxOA9vTMW88A4CRWmf336M7HCJX4kDTdr8+o4vbv/l4V5xlFAoGBAN9K
+7tACQkZ/U7QaGipxgqZ4TMcKMTs8wv9bWF3XQC6qwLvl3I8WnAP+blw0JEdTELFx
+PDv2lCQOGui2tQ3RsjpK80MgG04bL0uB0MmJQn4b5d/RIHspp30AdjYbg21Fht1T
+dH1zViLNEHTWunsN+4EhVrFWqL2GKDLOPLZPydvpAoGBAOoDRvkiEqfZYOvCaOZd
+AZ9hBLcXr5IqBOzE5VXx1xXg2pZVMu80sLdkFzRN9xv7MZXnhcqAijvAJ2lxasMT
+QtmSYu5+YwX7xuqogRsNC5KLtZVV9I+pGsMs046hYn3mT7DGmNHISKL9vyRJdQQC
+yzmNP6QzIb4fQTufeOapkowB
+-----END PRIVATE KEY-----
+"""
+client_id = 'ec962a8d-0cf0-4c77-9164-ebf0d5a8b674'
 redox_auth_location = 'https://api.redoxengine.com/v2/auth/token'
 ## All Redox FHIR request URLs start with this base: https://api.redoxengine.com/fhir/R4/[organization-name]/[environment-type]/
-auth_json = """<auth json>"""
+auth_json =  """
+{
+  "kty": "RSA",
+  "kid": "SXdU50UhUmnSbOHaqJrdcFELslYrbJeQaSXXBBcgqtM",
+  "alg": "RS384",
+  "use": "sig"
+}
+"""
 
 # COMMAND ----------
 
