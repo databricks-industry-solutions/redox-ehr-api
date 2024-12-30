@@ -62,10 +62,6 @@ class RedoxApiAuth(requests.auth.AuthBase):
       }, timeout=timeout)
     
   def can_connect(self):
-    if self.generate_token() is None:
-      print("Generate token is None")
-    if (self.generate_token().status_code == 200) is None:
-      print("Statement is None")
     return (self.generate_token().status_code == 200)
 
   def get_token_expiry(self):
