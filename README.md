@@ -35,6 +35,12 @@ Troubleshooting connection errors
 ```python
 result = auth.generate_token()
 result.json()
+"""Output will look something like this
+{'error': 'invalid_request',
+ 'error_description': '...',
+ 'error_uri': '...'
+}
+"""
 ```
 
 ### Writeback using python on small datasets
