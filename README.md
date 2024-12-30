@@ -22,6 +22,8 @@ The python wheel file is available for download under this repo's [releases](htt
 
 ### Authentication
 
+Key, Auth Json, and Client ID retrieved from [Redox developer docs](https://docs.redoxengine.com/api-reference/fhir-api-reference/authenticate-an-oauth-api-key/)
+
 ```python
 TODO
 ```
