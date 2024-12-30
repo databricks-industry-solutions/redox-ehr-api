@@ -24,5 +24,8 @@ setup(
         "License :: Other/Proprietary License",
         "Operating System :: OS Independent",
     ],
-    packages=['ehrwrite']
+    packages=['redoxwrite'],
+    install_requires=[
+        "jwt"
+    ]
 )
