@@ -25,7 +25,16 @@ The python wheel file is available for download under this repo's [releases](htt
 Key, Auth Json, and Client ID retrieved from [Redox developer docs](https://docs.redoxengine.com/api-reference/fhir-api-reference/authenticate-an-oauth-api-key/)
 
 ```python
-TODO
+from redoxwrite import *
+auth = RedoxApiAuth(redox_client_id, private_key, auth_json)
+print("Is connection successful? " + str(auth.can_connect()))
+```
+
+Troubleshooting connection errors
+
+```python
+result = auth.generate_token()
+result.json()
 ```
 
 ### Writeback using python on small datasets
