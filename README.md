@@ -55,7 +55,6 @@ TODO
 TODO
 ```
 
-### Authentication 
 
 ## Authors
 - <emma.yamada@databricks.com>
