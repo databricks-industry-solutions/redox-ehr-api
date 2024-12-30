@@ -62,7 +62,7 @@ class RedoxApiAuth(requests.auth.AuthBase):
       }, timeout=timeout)
     
   def can_connect(self):
-    return self.generate_token().status_code == 200
+    return (self.generate_token().status_code == 200)
 
   def get_token_expiry(self):
     return self.__token_expiry
