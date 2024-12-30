@@ -7,7 +7,7 @@
 This accelerator uses a Databricks partner, [Redox](https://docs.redoxengine.com/how-to-use-redox/manage-cloud-connectivity/create-a-destination-for-microsoft-azure-databricks/), to write data from Databricks to any EHR system.
 
 ## Reference Architecture
-[!alt text](./img/architecture_ref.png)
+[!alt text](https://github.com/databricks-industry-solutions/redox-ehr-api/blob/main/img/architecture_ref.png?raw=true)
 
 ## Authors
 <john.doe@databricks.com>
