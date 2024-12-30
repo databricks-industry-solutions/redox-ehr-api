@@ -18,7 +18,7 @@ Install this package via pip
 pip install git+https://github.com/databricks-industry-solutions/redox-ehr-api
 ```
 
-The python wheel file is available for download under this repo's releases.
+The python wheel file is available for download under this repo's [releases](https://github.com/databricks-industry-solutions/redox-ehr-api/releases).
 
 ### Authentication
 
