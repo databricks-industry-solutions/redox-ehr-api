@@ -41,8 +41,8 @@ TODO
 ### Authentication 
 
 ## Authors
-<emma.yamada@databricks.com>
-<aaron.zavora@databricks.com>
+- <emma.yamada@databricks.com>
+- <aaron.zavora@databricks.com>
 
 ## Project support 
 
