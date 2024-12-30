@@ -3,22 +3,24 @@
 """
 
 class RedoxApiRequest:
-    def __init__(self, auth, base_url, source_id):
+    def __init__(self, auth, base_url):
         self.auth = auth
         self.base_url = base_url
-        self.source_id = source_id
 
     def make_request(self, http_method, resource, action, data=None):
-        method = getattr(requests, http_method)
-        endpoint = f"{resource}/{action}"
-        url = f"{self.base_url}{endpoint}"
-
-        headers = {
-            'Authorization': f"Bearer {auth.get_token()['access_token']}",
-            'Content-Type': 'application/json',
-            'Redox-Source-Id': source_id
-        }
-
-        response = method(url, headers=headers, data=data)
-        print(json.dumps(response.json(), indent=4))
+        response = getattr(requests, http_method)(f"{self.base_url}/{resource}/{action}", headers=headers, data=data, auth=auth)
+        
+        return {'request':
+                {
+                    'http_method': http_method,
+                    'url': f"{self.base_url}/{resource}/{action}",
+                },
+                'response': {
+                    'response_status_code': response.status_code, 
+                    'response_time_seconds': (response.elapsed.microseconds / 1000000),
+                    'response_headers': response.headers,
+                    'response_text': response.text,
+                    'response_url': response.url
+                }
+            }
         
