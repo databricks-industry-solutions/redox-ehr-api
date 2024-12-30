@@ -30,7 +30,7 @@ class RedoxApiAuth(requests.auth.AuthBase):
     return self.__token
   
   def __call__(self, r):
-    r.headers['Authorization'] = 'Bearer %s' % self.get_token()
+    r.headers['Authorization'] = 'Bearer %s' % self.get_token()['access_token']
     return r
 
   """
