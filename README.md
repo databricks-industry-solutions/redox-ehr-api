@@ -9,8 +9,40 @@ This accelerator uses a Databricks partner, [Redox](https://docs.redoxengine.com
 ## Reference Architecture
 ![logo](https://github.com/databricks-industry-solutions/redox-ehr-api/blob/main/img/architecture_ref.png?raw=true)
 
+## Getting Started
+
+### Installation 
+Install this package via pip 
+
+```python
+pip install git+https://github.com/databricks-industry-solutions/redox-ehr-api
+```
+
+The python wheel file is available for download under this repo's releases.
+
+### Authentication
+
+```python
+TODO
+```
+
+### Writeback using python on small datasets
+
+```python
+TODO 
+```
+
+### Writeback using Dataframes on large datasets
+
+```python
+TODO
+```
+
+### Authentication 
+
 ## Authors
-<john.doe@databricks.com>
+<emma.yamada@databricks.com>
+<aaron.zavora@databricks.com>
 
 ## Project support 
 
