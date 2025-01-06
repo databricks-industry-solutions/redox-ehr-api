@@ -65,7 +65,22 @@ rapi.make_request("post", resource="Observation", action="$observation-create", 
 
 ### Response Object
 
-TODO
+```json
+{'request':
+  {
+    'http_method': "The requested HTTP Method",
+    'url': "The full URL requested",
+    'data': "Any data sent along with the request"
+  },
+  'response': {
+    'response_status_code': "The HTTP response code returned from Redox",
+    'response_time_seconds': "The time the request took in seconds",
+    'response_headers': "The response headers from Redox",
+    'response_text': "The Response data, aka json object",
+    'response_url': "The response URL updated"
+  }
+}
+```
 
 ### Usage in Spark 
 
