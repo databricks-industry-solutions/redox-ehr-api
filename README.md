@@ -63,6 +63,14 @@ rapi.make_request("get", resource="Patient", action=<patient_id>)
 rapi.make_request("post", resource="Observation", action="$observation-create", data=<json FHIR bundle>)
 ```
 
+### Response Object
+
+TODO
+
+### Usage in Spark 
+
+TODO
+
 ### Example Usage
 
 Including writebacks, see the demo notebook and an HTML friendly version. TODO
