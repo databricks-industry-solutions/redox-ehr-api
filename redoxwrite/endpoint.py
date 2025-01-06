@@ -16,6 +16,7 @@ class RedoxApiRequest:
                 {
                     'http_method': http_method,
                     'url': f"{self.base_url}{resource}/{action}",
+                    'data': ('' if data is None else data)
                 },
                 'response': {
                     'response_status_code': response.status_code, 
