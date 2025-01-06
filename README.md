@@ -60,7 +60,7 @@ rapi.make_request("post", resource="Patient", action="_search")
 rapi.make_request("get", resource="Patient", action=<patient_id>)
 
 #Update a patient chart
-rapi.make_request("post", resource="Observation", action="$observation-create", data=json.dumps(observation_bundle))
+rapi.make_request("post", resource="Observation", action="$observation-create", data=<json FHIR bundle>)
 ```
 
 ### Writeback using python on small datasets
