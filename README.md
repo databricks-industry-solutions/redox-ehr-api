@@ -43,6 +43,26 @@ result.json()
 """
 ```
 
+### Interfacing with Redox API Endpoints
+
+_RedoxApiRequest()_ takes the auth and FHIR endpoint and provides the interface for all FHIR actions against Redox
+
+> [!NOTE]
+> Paged search is not currently included in the RedoxApiRequest class
+
+```python
+rapi = RedoxApiRequest(auth, base_url = 'https://api.redoxengine.com/fhir/R4/redox-fhir-sandbox/Development/')
+#e.g.
+#Search for patients
+rapi.make_request("post", resource="Patient", action="_search")
+
+#Get a specific patient
+rapi.make_request("get", resource="Patient", action=<patient_id>)
+
+#Update a patient chart
+rapi.make_request("post", resource="Observation", action="$observation-create", data=json.dumps(observation_bundle))
+```
+
 ### Writeback using python on small datasets
 
 ```python
