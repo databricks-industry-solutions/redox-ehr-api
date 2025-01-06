@@ -63,17 +63,9 @@ rapi.make_request("get", resource="Patient", action=<patient_id>)
 rapi.make_request("post", resource="Observation", action="$observation-create", data=<json FHIR bundle>)
 ```
 
-### Writeback using python on small datasets
+### Example Usage
 
-```python
-TODO 
-```
-
-### Writeback using Dataframes on large datasets
-
-```python
-TODO
-```
+Including writebacks, see the demo notebook and an HTML friendly version. TODO
 
 
 ## Authors
