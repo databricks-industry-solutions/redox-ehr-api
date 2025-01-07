@@ -84,7 +84,46 @@ rapi.make_request("post", resource="Observation", action="$observation-create", 
 
 ### Usage in Spark 
 
-TODO
+API functions are stateless and can be used directly in Spark RDDs, functions, or UDFs.
+
+```python
+df = spark.createDataFrame([
+  ('58117110-ae47-452a-be2c-2d82b3a9e24b', 
+  float(datetime.now().strftime('%M.%S%f')[:-4]),
+  'fea42e82-eee6-449b-8a48-29fa5976169a')],
+['PATIENT_MRN', 'OBSERVATION_VALUE', "OBSERVATION_ID"])
+df.show()
+
++--------------------+-----------------+--------------------+
+|         PATIENT_MRN|OBSERVATION_VALUE|      OBSERVATION_ID|
++--------------------+-----------------+--------------------+
+|58117110-ae47-452...|            58.17|fea42e82-eee6-449...|
++--------------------+-----------------+--------------------+
+
+observation = ( df.
+    rdd.
+    map(lambda row: (row,
+      rapi.make_request("get", resource="Observation", action=row.asDict().get('OBSERVATION_ID')))
+    )
+)
+print(json.dumps(json.loads(observation.take(1)[0][1]['response']['response_text']), indent=2))
+
+"""
+{
+  "category": [
+    {
+      "coding": [
+        {
+          "code": "vital-signs",
+          "display": "vital-signs",
+          "system": "http://terminology.hl7.org/CodeSystem/observation-category"
+        }
+      ]
+    }
+  ],
+...
+"""
+```
 
 ### Example Usage
 
