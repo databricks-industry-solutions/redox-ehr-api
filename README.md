@@ -146,3 +146,4 @@ Any issues discovered through the use of this project should be filed as GitHub 
 
 | library                                | description             | license    | source                                              |
 |----------------------------------------|-------------------------|------------|-----------------------------------------------------|
+|pyjwt| JWT web token framework in python | MIT | https://github.com/jpadilla/pyjwt |
