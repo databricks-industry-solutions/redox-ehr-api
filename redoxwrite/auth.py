@@ -10,27 +10,32 @@ class RedoxApiAuth(requests.auth.AuthBase):
                client_id, 
                private_key, 
                auth_json,
+               source_id,
                auth_location = 'https://api.redoxengine.com/v2/auth/token'):
     self.__client_id = client_id
     self.__private_key = private_key
     self.__auth_json = json.loads(auth_json)
     self.auth_location = auth_location
+    self.source_id = source_id
     self.__token = None
-    self.__token_expiry = None
+    self.token_expiry = None
 
   def get_token(self,
-                now = datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")),
-                expiration = datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")) + datetime.timedelta(minutes=5),
+                now = None,
+                expiration = None,
                 timeout=30):
-    if self.__token is None or now >= self.__token_expiry:
+    now = (now if now is not None else datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")))
+    expiration = (expiration if expiration is not None else datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")) + datetime.timedelta(minutes=5))
+    if self.__token is None or now >= self.token_expiry:
       t = self.generate_token(now, expiration, timeout)
       t.raise_for_status()
       self.__token = json.loads(t.text)
-      self.__token_expiry = expiration
+      self.token_expiry = expiration
     return self.__token
   
   def __call__(self, r):
-    r.headers['Authorization'] = 'Bearer %s' % self.__token['access_token']
+    r.headers['Authorization'] = 'Bearer %s' % self.get_token()['access_token']
+    r.headers['Redox-Source-Id'] = self.source_id
     return r
 
   """
@@ -38,7 +43,12 @@ class RedoxApiAuth(requests.auth.AuthBase):
       @param expiration = the datetime when the token expires, default 5 minutes
       @param timeout = seconds to timeout request, default 30 
   """
-  def generate_token(self, now = datetime.datetime.now(), expiration = datetime.datetime.now() + datetime.timedelta(minutes=5), timeout=30): 
+  def generate_token(self,
+                     now = None,
+                     expiration = None,
+                     timeout=30):
+    now = (now if now is not None else datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")))
+    expiration = (expiration if expiration is not None else datetime.datetime.now(zoneinfo.ZoneInfo("America/New_York")) + datetime.timedelta(minutes=5))
     return requests.post(self.auth_location, 
         data= {
         'grant_type': 'client_credentials',
@@ -62,7 +72,4 @@ class RedoxApiAuth(requests.auth.AuthBase):
       }, timeout=timeout)
     
   def can_connect(self):
-    pass #TODO
-
-  def get_token_expiry(self):
-    return self.__token_expiry
+    return (self.generate_token().status_code == 200)
