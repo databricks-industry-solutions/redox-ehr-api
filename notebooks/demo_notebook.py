@@ -85,9 +85,6 @@ observation_bundle = {
   "entry":[{"resource": {"resourceType": "Patient", "id": patient_id}},
           observation]
 }
-
-# COMMAND ----------
-
 print(json.dumps(observation_bundle, indent=2))
 
 # COMMAND ----------
