@@ -127,7 +127,7 @@ print(json.dumps(json.loads(observation.take(1)[0][1]['response']['response_text
 
 ### Example Usage
 
-Including writebacks, see the demo notebook and an HTML friendly version. TODO
+Including writebacks, see the demo notebook and an (HTML friendly version)[https://databricks-industry-solutions.github.io/redox-ehr-api]. TODO
 
 
 ## Authors
