@@ -11,7 +11,7 @@ pip install git+https://github.com/databricks-industry-solutions/redox-ehr-api
 # DBTITLE 1,Credentials setup
 private_key = """REDACTED"""
 
-redox_client_id = 'ec962a8d-...'
+redox_client_id = 'REDACTED'
 auth_json = """
 {
   "kty": "RSA",
@@ -21,7 +21,7 @@ auth_json = """
 }
 """
 
-redox_source_id = '91b0ab2f-...'
+redox_source_id = 'REDACTED'
 
 # COMMAND ----------
 
@@ -45,59 +45,100 @@ rapi = RedoxApiRequest(auth, base_url = redox_base_url)
 
 # COMMAND ----------
 
-# DBTITLE 1,Search for Observations
-result = rapi.make_request("post", resource="Observation", action="_search")
-if result['response']['response_status_code'] != 200:
-  print("Error from API " + str(result['response']['response_text']) )
-
-# COMMAND ----------
-
-# DBTITLE 1,Sample Search Results
-data = json.loads(result['response']['response_text'])
-print("Number of observations found " + str(len(data['entry'])))
-observation = data['entry'][3]
-print(json.dumps(observation, indent=2))
-
-
-# COMMAND ----------
-
-# DBTITLE 1,Update a random observation
-import random
-from datetime import datetime
-"""
-Following Redox specs for observation-update
-https://docs.redoxengine.com/api-reference/fhir-api-reference/fhir-resources/Observation/$observation-update/
-"""
-# Set value to the datetime minute.seconds
-observation['resource']['valueQuantity']['value'] = float(datetime.now().strftime('%M.%S%f')[:-4])
-del observation['search']
-del observation['resource']['meta']
-print(json.dumps(observation, indent=2))
-
-# COMMAND ----------
-
-# DBTITLE 1,Wrap resources in a Bundle
-#Wrap the observation & patient info in a bundle
-patient_id = observation['resource']['subject']['reference'].split('/')[1]
-observation_bundle = {
-  "resourceType": "Bundle",
-  "type": "message",
-  "entry":[{"resource": {"resourceType": "Patient", "id": patient_id}},
-          observation]
+# DBTITLE 1,Create an observation
+#creating an observation for remaining length of 4 day stay at a hospital 
+observation = """
+{
+   "resourceType":"Bundle",
+   "entry":[
+      {
+         "resource":{
+            "category":[
+               {
+                  "coding":[
+                     {
+                        "code":"survey",
+                        "display":"Survey",
+                        "system":"http://terminology.hl7.org/CodeSystem/observation-category"
+                     }
+                  ]
+               }
+            ],
+            "code":{
+               "coding":[
+                  {
+                     "code":"78033-8",
+                     "display":"Remaining Hospital Stay",
+                     "system":"http://loinc.org"
+                  }
+               ],
+               "text":"Remaining Hospital Stay"
+            },
+            "effectiveDateTime":"2024-01-28T18:06:33.245-05:00",
+            "issued":"2024-01-28T18:06:33.245-05:00",
+            "resourceType":"Observation",
+            "status":"final",
+            "valueQuantity":{
+               "code":"days",
+               "system":"https://www.nubc.org/CodeSystem/RevenueCodes",
+               "unit":"days",
+               "value":4
+            },
+            "subject": {
+              "reference": "Patient/58117110-ae47-452a-be2c-2d82b3a9e24b"
+            },
+            "identifier": [
+            {
+              "system": "urn:databricks",
+              "value": "1234567890"
+            }
+          ]
+         }
+      },
+      {
+         "resource":{
+           "resourceType": "Patient",
+           "identifier": [
+            {
+              "system": "urn:redox:health-one:MR",
+              "value": "0000991458"
+            },
+            {
+              "system": "http://hl7.org/fhir/sid/us-ssn",
+              "value": "547-01-9991"
+            }
+          ]
+         }
+      }
+   ]
 }
-print(json.dumps(observation_bundle, indent=2))
+"""
 
 # COMMAND ----------
 
-# DBTITLE 1,Push update to the EHR through Redox
-response = rapi.make_request("post", resource="Observation", action="$observation-update", data=json.dumps(observation_bundle))
-print(json.dumps(json.loads(response['response']['response_text']), indent=2))
+print(json.loads(json.dumps(observation, indent=2)))
 
 # COMMAND ----------
 
-# DBTITLE 1,Confirm the observation has been updated
-response = rapi.make_request("get", resource="Observation", action=observation['fullUrl'].split('/')[-1])
-print(json.dumps(json.loads(response['response']['response_text']), indent=2))
+# DBTITLE 1,Post Observation to EHR
+result = rapi.make_request("post", resource="Observation", action="$observation-create", data=observation)
+
+# COMMAND ----------
+
+# DBTITLE 1,Confirm Post Succeded
+if result['response']['response_status_code'] != 200:
+  print("Failed to update the patient information")
+print(json.dumps(json.loads(result['response']['response_text']), indent=2))
+
+# COMMAND ----------
+
+# DBTITLE 1,Confirm Data Created
+observation_id = json.loads(result['response']['response_text'])['entry'][0]['response']['location'].split('/')[-3]
+response = rapi.make_request("get", resource="Observation", action=observation_id)
+data = json.loads(response['response']['response_text'])
+
+assert data['valueQuantity']['value'] == 4
+print(json.dumps(data, indent=2))
 
 # COMMAND ----------
 
@@ -105,52 +146,64 @@ print(json.dumps(json.loads(response['response']['response_text']), indent=2))
 
 # COMMAND ----------
 
-# DBTITLE 1,Sample Dataframe with Observation
+# DBTITLE 1,Dataframe with Observation
 df = spark.createDataFrame([
   ('58117110-ae47-452a-be2c-2d82b3a9e24b', 
-  float(datetime.now().strftime('%M.%S%f')[:-4]),
-  'fea42e82-eee6-449b-8a48-29fa5976169a')],
-['PATIENT_MRN', 'OBSERVATION_VALUE', "OBSERVATION_ID"])
+  3,
+  observation_id)],
+['PATIENT_MRN', 'LENGTH_OF_STAY', "OBSERVATION_ID"])
 df.show()
 
 # COMMAND ----------
 
-#create a tuple of (row, response)
-observation = ( df.
+# DBTITLE 1,Call the API from the DataFrame
+#create a tuple of (row, get response)
+observation_rdd = ( df.
     rdd.
     map(lambda row: (row,
       rapi.make_request("get", resource="Observation", action=row.asDict().get('OBSERVATION_ID')))
     )
 )
-print(json.dumps(json.loads(observation.take(1)[0][1]['response']['response_text']), indent=2))
+print(json.dumps(json.loads(observation_rdd.take(1)[0][1]['response']['response_text']), indent=2))
 
 # COMMAND ----------
 
-# DBTITLE 1,Update Observation
-def updateObservation(data, value):
-  observation = json.loads(data['response']['response_text'])
-  # Set value to the datetime minute.seconds
-  observation['valueQuantity']['value'] = value
-  del observation['meta']
-  patient_id = observation['subject']['reference'].split('/')[1]
-  observation_bundle = {
-    "resourceType": "Bundle",
-    "type": "message",
-    "entry":[{"resource": {"resourceType": "Patient", "id": patient_id}},
-           {"resource": observation}]
-  }
-  return rapi.make_request("post", resource="Observation", action="$observation-update", data=json.dumps(observation_bundle))
+# DBTITLE 1,Update The Observation via DataFrame
+def update_observation(value, data):
+  data['valueQuantity']['value'] = value
+  return json.dumps(
+    {
+      "resourceType": "Bundle", 
+      "entry": [{'resource': data}]
+    })
 
+#Create a tuple of (row, post response) 
+updated_rdd = ( observation_rdd.
+    map(lambda row_response_tuple:
+       (
+         row_response_tuple[0],  #the row from the DataFrame
+         rapi.make_request("post", 
+                           resource="Observation", 
+                           action ="$observation-update",
+                           data = update_observation(
+                            row_response_tuple[0].asDict().get('LENGTH_OF_STAY'), #value from DF
+                            json.loads(row_response_tuple[1]['response']['response_text']))
+          ) #the API payload to use
+       )
+    )
+) 
 
-#Update the observation with the value from OBSERVATION_VALUE in our table
-result =(observation.
-    map(lambda data: updateObservation(data[1], data[0].asDict().get('OBSERVATION_VALUE')))
-).take(1)[0]['response']['response_text']
+# COMMAND ----------
 
-print(json.dumps(json.loads(result), indent=2))
+# DBTITLE 1,Confirm the Post Succeded
+updated_rdd.toDF(['row', 'response']).select("response.response.response_status_code", "response.response.response_text").show(truncate=False)
 
 # COMMAND ----------
 
 # DBTITLE 1,Confirm Observation Updated
-response = rapi.make_request("get", resource="Observation", action='fea42e82-eee6-449b-8a48-29fa5976169a')
-print(json.dumps(json.loads(response['response']['response_text']), indent=2))
+observation_id = json.loads(result['response']['response_text'])['entry'][0]['response']['location'].split('/')[-3]
+response = rapi.make_request("get", resource="Observation", action=observation_id)
+data = json.loads(response['response']['response_text'])
+
+assert data['valueQuantity']['value'] == 3 #now has been updated to 3 instead of 4
+print(json.dumps(data, indent=2))
